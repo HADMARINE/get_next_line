@@ -6,7 +6,7 @@
 /*   By: lhojoon <lhojoon@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/14 12:28:47 by lhojoon           #+#    #+#             */
-/*   Updated: 2023/11/14 17:59:27 by lhojoon          ###   ########.fr       */
+/*   Updated: 2023/11/14 21:25:20 by lhojoon          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,20 @@
 size_t	contains_newline(char *str);
 void	*copymem(void *content, void *src, size_t *count, size_t newlen);
 size_t	manage_remains(void *buf, char **cur, size_t *count, size_t newlen);
-void	*freeandgo(void *buf, char *cur);
+void	*free_and_go(void **buf, char *cur, size_t count);
 size_t	verify_start(void *buf, size_t *remain_count, char **cur);
 void	removefront(void *buf, size_t len, size_t maxlen);
+void	*getzeromem(size_t size);
 
-void	*freeandgo(void *buf, char *cur)
+void	*free_and_go(void **buf, char *cur, size_t count)
 {
-	free(buf);
+	if (buf != NULL)
+	{
+		free(*buf);
+		*buf = NULL;
+	}
+	if (count == 0)
+		return (NULL);
 	return (cur);
 }
 
@@ -35,16 +42,15 @@ char	*get_next_line(int fd)
 
 	cur = NULL;
 	count = 0;
-	// printf("\n\nBUFFER\n___\n%s\n__\n", (char *)buf);
 	if (buf == NULL)
-		buf = malloc(BUFFER_SIZE);
+		buf = getzeromem(BUFFER_SIZE);
 	if (remain_count > 0)
 	{
 		count = verify_start(buf, &remain_count, &cur);
 		if (count == 2)
 			return (cur);
 		if (count == 1)
-			return (freeandgo(buf, NULL));
+			return (free_and_go(&buf, NULL, 0));
 		if (count == 0)
 			count = remain_count;
 	}
@@ -57,7 +63,7 @@ char	*get_next_line(int fd)
 		res = read(fd, buf, BUFFER_SIZE);
 	}
 	if (res == 0)
-		return (freeandgo(buf, cur));
+		return (free_and_go(&buf, cur, count));
 	remain_count = manage_remains(buf, &cur, &count, (size_t)res);
 	return (cur);
 }
@@ -69,13 +75,15 @@ size_t	manage_remains(void *buf, char **cur, size_t *count, size_t newlen)
 
 	i = 0;
 	s = (char *)malloc(sizeof(char) * BUFFER_SIZE);
-	while (i < newlen && *((char *)buf + i - 1) != '\n')
+	while (i < newlen && *((char *)buf + i) != '\n')
 	{
 		*((char *)s + i) = *((char *)buf + i);
 		i++;
 	}
+	if (i != BUFFER_SIZE)
+		*((char *)s + i++) = '\n';
 	*cur = copymem(*cur, s, count, i);
-	removefront(buf, *count, BUFFER_SIZE);
+	removefront(buf, i, BUFFER_SIZE);
 	free(s);
 	return (newlen - i);
 }

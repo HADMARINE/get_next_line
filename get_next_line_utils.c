@@ -6,7 +6,7 @@
 /*   By: lhojoon <lhojoon@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/14 12:28:49 by lhojoon           #+#    #+#             */
-/*   Updated: 2023/11/14 17:55:47 by lhojoon          ###   ########.fr       */
+/*   Updated: 2023/11/14 21:20:36 by lhojoon          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,4 +58,18 @@ void	removefront(void *buf, size_t len, size_t maxlen)
 	{
 		*((char *)buf + i++) = 0;
 	}
+}
+
+void	*getzeromem(size_t size)
+{
+	unsigned char	*p;
+	void			*v;
+
+	v = malloc(size);
+	p = (unsigned char *)v;
+	while (size--)
+	{
+		*(p++) = (unsigned char)0;
+	}
+	return (v);
 }

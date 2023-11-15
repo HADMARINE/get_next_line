@@ -6,13 +6,13 @@
 /*   By: lhojoon <lhojoon@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/14 12:28:49 by lhojoon           #+#    #+#             */
-/*   Updated: 2023/11/14 21:20:36 by lhojoon          ###   ########.fr       */
+/*   Updated: 2023/11/15 12:27:06 by lhojoon          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-size_t	contains_newline(char *str);
+size_t	contains_newline(char *str, size_t limit);
 void	*copymem(void *content, void *src, size_t *count, size_t newlen);
 void	removefront(void *buf, size_t len, size_t maxlen);
 
@@ -23,7 +23,7 @@ size_t	verify_start(void *buf, size_t *remain_count, char **cur)
 	char	*s;
 
 	count = 0;
-	nl = contains_newline((char *)buf);
+	nl = contains_newline((char *)buf, BUFFER_SIZE);
 	if (nl)
 	{
 		s = copymem(NULL, buf, &count, nl);
@@ -72,4 +72,31 @@ void	*getzeromem(size_t size)
 		*(p++) = (unsigned char)0;
 	}
 	return (v);
+}
+
+void	*free_and_go(void **buf, char *cur, size_t count)
+{
+	if (buf != NULL)
+	{
+		free(*buf);
+		*buf = NULL;
+	}
+	if (count == 0)
+		return (NULL);
+	return (cur);
+}
+
+size_t	contains_newline(char *str, size_t limit)
+{
+	char	*sp;
+
+	if (!str)
+		return (0);
+	sp = (char *)str;
+	while ((size_t)(sp - str) < limit && *sp)
+	{
+		if (*sp++ == '\n')
+			return (sp - str);
+	}
+	return (0);
 }

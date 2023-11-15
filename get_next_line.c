@@ -6,65 +6,67 @@
 /*   By: lhojoon <lhojoon@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/14 12:28:47 by lhojoon           #+#    #+#             */
-/*   Updated: 2023/11/14 21:25:20 by lhojoon          ###   ########.fr       */
+/*   Updated: 2023/11/15 12:27:12 by lhojoon          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-size_t	contains_newline(char *str);
+size_t	contains_newline(char *str, size_t limit);
 void	*copymem(void *content, void *src, size_t *count, size_t newlen);
 size_t	manage_remains(void *buf, char **cur, size_t *count, size_t newlen);
 void	*free_and_go(void **buf, char *cur, size_t count);
 size_t	verify_start(void *buf, size_t *remain_count, char **cur);
 void	removefront(void *buf, size_t len, size_t maxlen);
 void	*getzeromem(size_t size);
-
-void	*free_and_go(void **buf, char *cur, size_t count)
-{
-	if (buf != NULL)
-	{
-		free(*buf);
-		*buf = NULL;
-	}
-	if (count == 0)
-		return (NULL);
-	return (cur);
-}
+char	*inner_gnl(void **buf, size_t *remain_count, size_t count, int fd);
 
 char	*get_next_line(int fd)
 {
 	static void		*buf = NULL;
 	static size_t	remain_count = 0;
-	char			*cur;
-	int				res;
 	size_t			count;
 
-	cur = NULL;
-	count = 0;
 	if (buf == NULL)
 		buf = getzeromem(BUFFER_SIZE);
-	if (remain_count > 0)
+	count = 0;
+	return (inner_gnl(&buf, &remain_count, count, fd));
+}
+
+void	*return_by_count(char *cur, void **buf, size_t count)
+{
+	if (count == 2)
+		return (cur);
+	if (count == 1)
+		return (free_and_go(buf, NULL, 0));
+	return (NULL);
+}
+
+char	*inner_gnl(void **buf, size_t *remain_count, size_t count, int fd)
+{
+	char			*cur;
+	int				res;
+
+	cur = NULL;
+	if (*remain_count > 0)
 	{
-		count = verify_start(buf, &remain_count, &cur);
-		if (count == 2)
-			return (cur);
-		if (count == 1)
-			return (free_and_go(&buf, NULL, 0));
+		count = verify_start(*buf, remain_count, &cur);
+		if (count == 2 || count == 1)
+			return (return_by_count(cur, buf, count));
 		if (count == 0)
-			count = remain_count;
+			count = *remain_count;
 	}
-	res = read(fd, buf, BUFFER_SIZE);
-	while (contains_newline(((char *)buf)) == 0 && res != 0)
+	res = read(fd, *buf, BUFFER_SIZE);
+	while (contains_newline(*((char **)buf), BUFFER_SIZE) == 0 && res != 0)
 	{
-		cur = copymem(cur, buf, &count, res);
+		cur = copymem(cur, *buf, &count, res);
 		if (!cur)
 			return (NULL);
-		res = read(fd, buf, BUFFER_SIZE);
+		res = read(fd, *buf, BUFFER_SIZE);
 	}
 	if (res == 0)
-		return (free_and_go(&buf, cur, count));
-	remain_count = manage_remains(buf, &cur, &count, (size_t)res);
+		return (free_and_go(buf, cur, count));
+	*remain_count = manage_remains(*buf, &cur, &count, (size_t)res);
 	return (cur);
 }
 
@@ -88,25 +90,12 @@ size_t	manage_remains(void *buf, char **cur, size_t *count, size_t newlen)
 	return (newlen - i);
 }
 
-size_t	contains_newline(char *str)
-{
-	char	*sp;
-
-	sp = (char *)str;
-	while (*sp)
-	{
-		if (*sp++ == '\n')
-			return (sp - str);
-	}
-	return (0);
-}
-
 void	*copymem(void *content, void *src, size_t *count, size_t newlen)
 {
 	size_t	i;
 	void	*trunk;
 
-	trunk = malloc(*count + newlen);
+	trunk = malloc(*count + newlen + 1);
 	if (!trunk)
 		return (NULL);
 	i = 0;
@@ -121,6 +110,7 @@ void	*copymem(void *content, void *src, size_t *count, size_t newlen)
 		*((char *)trunk + i) = *((char *)src + (size_t)(i - (*count - newlen)));
 		i++;
 	}
+	*((char *)trunk + i++) = '\0';
 	free(content);
 	return (trunk);
 }

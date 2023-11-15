@@ -6,7 +6,7 @@
 /*   By: lhojoon <lhojoon@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/14 12:28:49 by lhojoon           #+#    #+#             */
-/*   Updated: 2023/11/15 13:08:03 by lhojoon          ###   ########.fr       */
+/*   Updated: 2023/11/15 14:21:41 by lhojoon          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 size_t	contains_newline(char *str, size_t limit);
 void	*copymem(void *content, void *src, size_t *count, size_t newlen);
-void	removefront(void *buf, size_t len, size_t maxlen);
+void	removefront(char buf[], size_t len, size_t maxlen);
 
-size_t	verify_start(void *buf, size_t *remain_count, char **cur)
+size_t	verify_start(char buf[], size_t *remain_count, char **cur)
 {
 	size_t	nl;
 	size_t	count;
@@ -44,7 +44,7 @@ size_t	verify_start(void *buf, size_t *remain_count, char **cur)
 	return (2);
 }
 
-void	removefront(void *buf, size_t len, size_t maxlen)
+void	removefront(char buf[], size_t len, size_t maxlen)
 {
 	size_t	i;
 
@@ -60,27 +60,20 @@ void	removefront(void *buf, size_t len, size_t maxlen)
 	}
 }
 
-void	*getzeromem(size_t size)
+void	putzero(char buf[], size_t size)
 {
-	unsigned char	*p;
-	void			*v;
+	size_t	i;
 
-	v = malloc(size);
-	p = (unsigned char *)v;
-	while (size--)
+	i = 0;
+	while (i < size)
 	{
-		*(p++) = (unsigned char)0;
+		buf[i] = 0;
+		i++;
 	}
-	return (v);
 }
 
-void	*free_and_go(void **buf, char *cur, size_t count, size_t *remain_count)
+void	*free_and_go(char *cur, size_t count, size_t *remain_count)
 {
-	if (buf != NULL)
-	{
-		free(*buf);
-		*buf = NULL;
-	}
 	if (count == 0)
 		return (NULL);
 	if (remain_count)
@@ -88,13 +81,11 @@ void	*free_and_go(void **buf, char *cur, size_t count, size_t *remain_count)
 	return (cur);
 }
 
-size_t	contains_newline(char *str, size_t limit)
+size_t	contains_newline(char str[], size_t limit)
 {
 	char	*sp;
 
-	if (!str)
-		return (0);
-	sp = (char *)str;
+	sp = str;
 	while ((size_t)(sp - str) < limit && *sp)
 	{
 		if (*sp++ == '\n')
